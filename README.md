@@ -3,11 +3,11 @@
 This project aims to create a high-performance multi-threaded network server capable of managing incoming connections, processing text data, and analysing patterns within the data.
 
 ## Setup
-Use resources like the Gutenberg Project (https://www.gutenberg.org) to obtain large text files for this project. <br/>
-Download plain text format books (UTF-8) and save them locally for later use.
+I am using the Gutenberg Project (https://www.gutenberg.org) to obtain large text files for this project. <br/>
+Books are downloaded in plain text format (UTF-8) and saved locally for later use, e.g. 'Great Expectations', 'The Adventures of Sherlock Holmes' and 'The Wonderful Wizard of Oz'.
 
-To send these text files to the program, consider utilising the netcat tool (nc). <br/>
-For instance, to transmit a text file to the server, you may use the following command:<br/>
+To send these text files to the program, I am utilising the netcat tool (nc). To install the package on Linux, run `sudo apt-get install netcat`.<br/>
+For instance, to transmit a text file to the server, the following command is used:<br/>
 `nc localhost 1234 -i <delay> < file.txt`
 
 ## Multi-Threaded Network Server
