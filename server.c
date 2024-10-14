@@ -2,27 +2,96 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h> // For read(), write(), close()
+#include <unistd.h>       // For read(), write(), close()
 #include <netinet/in.h>   // For struct sockaddr_in
 #include <sys/socket.h>   // For socket(), bind(), listen(), etc.
 #include <arpa/inet.h>    // For htonl(), htons(), inet_addr(), etc.
 #define BACKLOG 128
-#define MAXLINE 512 // Buffer size for incoming text lines
+#define MAXLINE 512       // Buffer size for incoming text lines
 #define SA struct sockaddr
 
+/*
+    List Node structure Definition
+*/ 
 struct Node {
-    char line[MAXLINE];
+    char text[MAXLINE];
     struct Node* next;
     struct Node* book_next;
 };
 
+/*
+    List Initialization
+*/ 
+struct Node* head = NULL;
+struct Node* tail = NULL;
+
+/*
+    Helper functions to manage Shared List
+*/ 
+int update_shared_list(char buffer[]){
+
+    // Case 1: First read - empty list, set both head and tail to the new node
+    if(head == NULL && tail == NULL){
+        struct Node* new_read = malloc(sizeof(struct Node));
+        strcpy(new_read->text, buffer);
+        new_read->next = NULL;
+        new_read->book_next = NULL;
+
+        head = new_read;
+        tail = new_read;
+    }
+
+    // Case 2: Single node, point head to new node and update tail
+    else if(head == tail){
+        struct Node* new_read = malloc(sizeof(struct Node));
+        strcpy(new_read->text, buffer);
+        new_read->next = NULL;
+        new_read->book_next = NULL;
+
+        head->next = new_read;
+        head->book_next = new_read;
+
+        tail = new_read;
+    }
+
+    // Case 3: Multiple nodes present, update tail
+    else{
+        struct Node* new_read = malloc(sizeof(struct Node));
+        strcpy(new_read->text, buffer);
+        new_read->next = NULL;
+        new_read->book_next = NULL;
+
+        tail->next = new_read;
+        tail->book_next = new_read;
+
+        tail = new_read;
+    }
+
+    return 0;
+}
+
+int print_shared_list(){
+    struct Node* curr = head;
+    while(curr != NULL){
+        fprintf(stdout, "%s\n", curr->text);
+        curr = curr->next;
+    }
+    return 0;
+}
+
+
+
+/*
+    Logging System - outputs line read to both console and file
+*/ 
 int log_file(char buffer[]){
-    FILE *logFile = fopen("server_log.txt", "a");
+    FILE *logFile = fopen("logfile.txt", "a");
     if(logFile == NULL){
         fprintf(stderr, "Error opening server log file.\n");
         return -1;
     }
 
+    // Get current system timestamp
     time_t now;
     time(&now);
     char *timestamp = ctime(&now);
@@ -30,25 +99,35 @@ int log_file(char buffer[]){
     // Remove the newline from the timestamp (ctime adds one at the end)
     timestamp[strlen(timestamp) - 1] = '\0';
 
-    fprintf(stdout, "[%s] %s\n", timestamp, buffer);
+    // Print to console and/or logfile
+    // fprintf(stdout, "[%s] %s\n", timestamp, buffer);
     fprintf(logFile, "[%s] %s\n", timestamp, buffer);
 
     fclose(logFile);
     return 0;
 }
 
-int read_lines(int connfd){
+/*
+    Reads in a book line by line from the netcat client 
+*/ 
+int read_book_lines(int connfd){
     char buffer[MAXLINE];
     int bytes_received;
 
     while((bytes_received = recv(connfd, buffer, MAXLINE, 0)) > 0){
         buffer[bytes_received] = '\0';
         log_file(buffer);
+        update_shared_list(buffer);
     }
 
     return 0;
 }
 
+
+
+/*
+    Parses input arguments from the console
+*/ 
 int parse_arguments(int argc, char *argv[], char **port, char **pattern) {
     // Check if the right number of arguments is provided
     if (argc != 5) {
@@ -85,6 +164,14 @@ int parse_arguments(int argc, char *argv[], char **port, char **pattern) {
 }
 
 
+
+/*
+  *
+  *
+    MAIN SERVER PROGRAM
+  *
+  *
+*/ 
 int main(int argc, char *argv[]) {
 
     char *port_str = NULL;
@@ -150,11 +237,12 @@ int main(int argc, char *argv[]) {
 
     // Handles logic...
     // Prints all line of incoming text file
-    if(read_lines(connfd) < 0){
+    if(read_book_lines(connfd) < 0){
         printf("File read error...\n");
         exit(0);
     }
     else{
+        print_shared_list();
         printf("File read success...\n");
     }
 
