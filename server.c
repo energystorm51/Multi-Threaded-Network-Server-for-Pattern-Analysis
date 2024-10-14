@@ -6,7 +6,20 @@
 #include <sys/socket.h>   // For socket(), bind(), listen(), etc.
 #include <arpa/inet.h>    // For htonl(), htons(), inet_addr(), etc.
 #define BACKLOG 128
+#define MAXLINE 512 // Buffer size for incoming text lines
 #define SA struct sockaddr
+
+int read_lines(int connfd){
+    char buffer[MAXLINE];
+    int bytes_received;
+
+    while((bytes_received = recv(connfd, buffer, MAXLINE, 0)) > 0){
+        buffer[bytes_received] = '\0';
+        printf("%s\n", buffer);
+    }
+
+    return 0;
+}
 
 int parse_arguments(int argc, char *argv[], char **port, char **pattern) {
     // Check if the right number of arguments is provided
@@ -97,7 +110,9 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in client_addr;
     socklen_t cli_len = sizeof(client_addr); 
 
-    if(accept(sockfd, (SA*)&client_addr, &cli_len) < 0){
+    int connfd = accept(sockfd, (SA*)&client_addr, &cli_len);
+
+    if(connfd < 0){
         printf("Client accept failed...\n");
         exit(0);
     }
@@ -106,6 +121,14 @@ int main(int argc, char *argv[]) {
     }
 
     // Handles logic...
+    // Prints all line of incoming text file
+    if(read_lines(connfd) < 0){
+        printf("File read error...\n");
+        exit(0);
+    }
+    else{
+        printf("File read success...\n");
+    }
 
     // Close socket connection
     close(sockfd);
