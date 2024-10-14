@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h> // For read(), write(), close()
 #include <netinet/in.h>   // For struct sockaddr_in
 #include <sys/socket.h>   // For socket(), bind(), listen(), etc.
@@ -9,13 +10,40 @@
 #define MAXLINE 512 // Buffer size for incoming text lines
 #define SA struct sockaddr
 
+struct Node {
+    char line[MAXLINE];
+    struct Node* next;
+    struct Node* book_next;
+};
+
+int log_file(char buffer[]){
+    FILE *logFile = fopen("server_log.txt", "a");
+    if(logFile == NULL){
+        fprintf(stderr, "Error opening server log file.\n");
+        return -1;
+    }
+
+    time_t now;
+    time(&now);
+    char *timestamp = ctime(&now);
+
+    // Remove the newline from the timestamp (ctime adds one at the end)
+    timestamp[strlen(timestamp) - 1] = '\0';
+
+    fprintf(stdout, "[%s] %s\n", timestamp, buffer);
+    fprintf(logFile, "[%s] %s\n", timestamp, buffer);
+
+    fclose(logFile);
+    return 0;
+}
+
 int read_lines(int connfd){
     char buffer[MAXLINE];
     int bytes_received;
 
     while((bytes_received = recv(connfd, buffer, MAXLINE, 0)) > 0){
         buffer[bytes_received] = '\0';
-        printf("%s\n", buffer);
+        log_file(buffer);
     }
 
     return 0;
