@@ -17,6 +17,9 @@
 // Global connection counter and mutex
 int connection_counter = 0;
 pthread_mutex_t counter_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t list_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 
 // Parses input arguments from the console
 int parse_arguments(int argc, char *argv[], char **port, char **pattern) {
@@ -54,11 +57,21 @@ int parse_arguments(int argc, char *argv[], char **port, char **pattern) {
     return 0; // Success
 }
 
+
+// Structure to hold connection data
+struct Thread_Data {
+    int connfd;
+    int connection_order;
+    struct Node* book_head;
+    struct Node* book_tail;
+};
+
 // List Node structure Definition
 struct Node {
     char text[MAXLINE];
     struct Node* next;
     struct Node* book_next;
+    int connection_order;
 };
 
 // Global List Initialization
@@ -66,43 +79,62 @@ struct Node* head = NULL;
 struct Node* tail = NULL;
 
 // Helper functions to manage Shared List
-void update_shared_list(char buffer[]){
+void update_shared_list(char buffer[], struct Thread_Data *data){
+
+    // Creat node for new line read
+    struct Node* new_read = malloc(sizeof(struct Node));
+    strcpy(new_read->text, buffer);
+    new_read->next = NULL;
+    new_read->book_next = NULL;
+    new_read->connection_order = data->connection_order;
 
     // Case 1: First read - empty list, set both head and tail to the new node
     if(head == NULL && tail == NULL){
-        struct Node* new_read = malloc(sizeof(struct Node));
-        strcpy(new_read->text, buffer);
-        new_read->next = NULL;
-        new_read->book_next = NULL;
-
         head = new_read;
         tail = new_read;
     }
 
     // Case 2: Single node, point head to new node and update tail
     else if(head == tail){
-        struct Node* new_read = malloc(sizeof(struct Node));
-        strcpy(new_read->text, buffer);
-        new_read->next = NULL;
-        new_read->book_next = NULL;
-
         head->next = new_read;
-        head->book_next = new_read;
 
+        if(head->connection_order == new_read->connection_order){
+            head->book_next = new_read;
+        }
+        else{
+            head->book_next = NULL;
+        }
+        
         tail = new_read;
     }
 
     // Case 3: Multiple nodes present, update tail
     else{
-        struct Node* new_read = malloc(sizeof(struct Node));
-        strcpy(new_read->text, buffer);
-        new_read->next = NULL;
-        new_read->book_next = NULL;
-
         tail->next = new_read;
-        tail->book_next = new_read;
+
+        if(tail->connection_order == new_read->connection_order){
+            tail->book_next = new_read;
+        }
+        else{
+            tail->book_next = NULL;
+        }
 
         tail = new_read;
+    }
+
+    if(data->book_head == NULL){
+        data->book_head = new_read;
+        data->book_tail = new_read;
+    }
+
+    else if(data->book_head == data->book_tail){
+        data->book_head->book_next = new_read;
+        data->book_tail = new_read;
+    }
+
+    else{
+        data->book_tail->book_next = new_read;
+        data->book_tail = new_read;
     }
 
 }
@@ -118,7 +150,7 @@ void print_shared_list(){
 
 
 // Logs read lines to both console and file
-void log_file(char buffer[]){
+void log_file(char buffer[], int connection_order){
     FILE *logFile = fopen("logfile.txt", "a");
     if(logFile == NULL){
         fprintf(stderr, "Error opening server log file.\n");
@@ -134,19 +166,13 @@ void log_file(char buffer[]){
     timestamp[strlen(timestamp) - 1] = '\0';
 
     // Print to console and/or logfile
-    // fprintf(stdout, "[%s] %s\n", timestamp, buffer);
-    fprintf(logFile, "[%s] %s\n", timestamp, buffer);
+    fprintf(stdout, "[%s] Book0%d: %s\n", timestamp, connection_order, buffer);
+    fprintf(logFile, "[%s] Book0%d: %s\n", timestamp, connection_order, buffer);
 
     fclose(logFile);
 }
 
 
-
-// Structure to hold connection data
-struct Thread_Data {
-    int connfd;
-    int connection_order;
-};
 
 /*
     Write received book
@@ -165,7 +191,7 @@ void write_book(struct Node* book_head, int connection_order){
 
     struct Node* curr = book_head;
     while(curr != NULL){
-        fprintf(stdout, "%s", curr->text);
+        // fprintf(stdout, "%s", curr->text);
         fprintf(book, "%s", curr->text);
         curr = curr->book_next;
     }
@@ -188,10 +214,17 @@ void *read_book_lines(void *arg){
 
         if(bytes_received > 0){
             // Received data from client
-            // Logs line read and add new node to the shared list
             buffer[bytes_received] = '\0';
-            log_file(buffer);
-            update_shared_list(buffer);
+
+            // Write line read to global logfile using mutex
+            pthread_mutex_lock(&log_mutex);
+            log_file(buffer, data->connection_order);
+            pthread_mutex_unlock(&log_mutex);
+
+            // Add new node to the shared list
+            pthread_mutex_lock(&list_mutex);
+            update_shared_list(buffer, data);
+            pthread_mutex_unlock(&list_mutex);
         }
         else if(bytes_received == 0){
             // Client closed connection
@@ -213,7 +246,7 @@ void *read_book_lines(void *arg){
 
     // Cleanup and exit thread
     close(data->connfd);
-    write_book(head, data->connection_order);
+    write_book(data->book_head, data->connection_order);
     free(data);  // Free allocated memory for thread data
     pthread_exit(NULL);
 }
@@ -303,6 +336,8 @@ int main(int argc, char *argv[]) {
         struct Thread_Data *data = malloc(sizeof(struct Thread_Data));
         data->connfd = connfd;
         data->connection_order = current_order;
+        data->book_head = NULL;
+        data->book_tail = NULL;
 
         int thread = pthread_create(&tid, NULL, read_book_lines, (void*)data);
         printf("Thread created...\n");

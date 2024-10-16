@@ -107,3 +107,39 @@
 [Wed Oct 16 11:49:03 2024] you will have to check the laws of the country where you are located
 
 [Wed Oct 16 11:49:06 2024] before using this eBook.
+[Thu Oct 17 01:38:10 2024] Book01: The Project Gutenberg eBook of Peter Pan
+
+[Thu Oct 17 01:38:11 2024] Book02: Title: Peter Pan
+
+[Thu Oct 17 01:38:13 2024] Book01:     
+
+[Thu Oct 17 01:38:14 2024] Book02: 
+
+[Thu Oct 17 01:38:16 2024] Book01: This ebook is for the use of anyone anywhere in the United States and
+
+[Thu Oct 17 01:38:17 2024] Book02: Author: J. M. Barrie
+
+[Thu Oct 17 01:38:19 2024] Book01: most other parts of the world at no cost and with almost no restrictions
+
+[Thu Oct 17 01:38:20 2024] Book02: 
+
+[Thu Oct 17 01:38:22 2024] Book01: whatsoever. You may copy it, give it away or re-use it under the terms
+
+[Thu Oct 17 01:38:23 2024] Book02: Release date: June 25, 2008 [eBook #16]
+
+[Thu Oct 17 01:38:25 2024] Book01: of the Project Gutenberg License included with this ebook or online
+
+[Thu Oct 17 01:38:26 2024] Book02:                 Most recently updated: February 15, 2021
+
+[Thu Oct 17 01:38:28 2024] Book01: at www.gutenberg.org. If you are not located in the United States,
+
+[Thu Oct 17 01:38:29 2024] Book02: 
+
+[Thu Oct 17 01:38:31 2024] Book01: you will have to check the laws of the country where you are located
+
+[Thu Oct 17 01:38:32 2024] Book02: Language: English
+
+[Thu Oct 17 01:38:34 2024] Book01: before using this eBook.
+[Thu Oct 17 01:38:35 2024] Book02: 
+
+[Thu Oct 17 01:38:38 2024] Book02: Credits: Duncan Research
