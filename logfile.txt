@@ -1,5 +1,0 @@
-[Mon Oct 14 15:18:46 2024] Hi there
-
-[Mon Oct 14 15:18:48 2024] My name is Jingyi Qiu 
-
-[Mon Oct 14 15:18:50 2024] but you can call me JY for short!
