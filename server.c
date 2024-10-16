@@ -151,8 +151,13 @@ struct Thread_Data {
 /*
     Write received book
 */
-void write_book(struct Node* book_head){
-    FILE *book = fopen("test_01.txt", "w");
+void write_book(struct Node* book_head, int connection_order){
+    char filename[20];
+
+    snprintf(filename, sizeof(filename), "book_0%d.txt", connection_order);
+
+    // Format filename using the global connection counter
+    FILE *book = fopen(filename, "w");
     if(book == NULL){
         fprintf(stderr, "Error writing to book...\n");
         return;
@@ -208,7 +213,7 @@ void *read_book_lines(void *arg){
 
     // Cleanup and exit thread
     close(data->connfd);
-    write_book(head);
+    write_book(head, data->connection_order);
     free(data);  // Free allocated memory for thread data
     pthread_exit(NULL);
 }

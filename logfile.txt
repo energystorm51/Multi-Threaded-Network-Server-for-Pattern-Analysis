@@ -1,0 +1,109 @@
+[Wed Oct 16 11:47:09 2024] *** START OF THE PROJECT GUTENBERG EBOOK PETER PAN ***
+
+[Wed Oct 16 11:47:11 2024] Title: Peter Pan
+
+[Wed Oct 16 11:47:12 2024] 
+
+[Wed Oct 16 11:47:14 2024] 
+
+[Wed Oct 16 11:47:15 2024] 
+
+[Wed Oct 16 11:47:17 2024] Author: J. M. Barrie
+
+[Wed Oct 16 11:47:18 2024] 
+
+[Wed Oct 16 11:47:20 2024] 
+
+[Wed Oct 16 11:47:21 2024] 
+
+[Wed Oct 16 11:47:23 2024] Release date: June 25, 2008 [eBook #16]
+
+[Wed Oct 16 11:47:24 2024] Peter Pan
+
+[Wed Oct 16 11:47:26 2024]                 Most recently updated: February 15, 2021
+
+[Wed Oct 16 11:47:27 2024] 
+
+[Wed Oct 16 11:47:29 2024] 
+
+[Wed Oct 16 11:47:30 2024] [PETER AND WENDY]
+
+[Wed Oct 16 11:47:32 2024] Language: English
+
+[Wed Oct 16 11:47:33 2024] 
+
+[Wed Oct 16 11:47:35 2024] 
+
+[Wed Oct 16 11:47:36 2024] by J. M. Barrie [James Matthew Barrie]
+
+[Wed Oct 16 11:47:38 2024] Credits: Duncan Research
+[Wed Oct 16 11:47:39 2024] 
+
+[Wed Oct 16 11:47:42 2024] A Millennium Fulcrum Edition produced in 1991 by Duncan Research. Note
+
+[Wed Oct 16 11:47:45 2024] that while a copyright was initially claimed for the labor involved in
+
+[Wed Oct 16 11:47:48 2024] digitization, that copyright claim is not consistent with current
+
+[Wed Oct 16 11:47:51 2024] copyright requirements. This text, which matches the 1911 original
+
+[Wed Oct 16 11:47:54 2024] publication, is in the public domain in the US.
+
+[Wed Oct 16 11:47:57 2024] 
+
+[Wed Oct 16 11:48:00 2024] 
+
+[Wed Oct 16 11:48:03 2024] Contents
+
+[Wed Oct 16 11:48:06 2024] 
+
+[Wed Oct 16 11:48:09 2024]  Chapter I. PETER BREAKS THROUGH
+
+[Wed Oct 16 11:48:12 2024]  Chapter II. THE SHADOW
+
+[Wed Oct 16 11:48:15 2024]  Chapter III. COME AWAY, COME AWAY!
+
+[Wed Oct 16 11:48:18 2024]  Chapter IV. THE FLIGHT
+
+[Wed Oct 16 11:48:21 2024]  Chapter V. THE ISLAND COME TRUE
+
+[Wed Oct 16 11:48:24 2024]  Chapter VI. THE LITTLE HOUSE
+
+[Wed Oct 16 11:48:27 2024]  Chapter VII. THE HOME UNDER THE GROUND
+
+[Wed Oct 16 11:48:30 2024]  Chapter VIII. THE MERMAIDS’ LAGOON
+
+[Wed Oct 16 11:48:33 2024]  Chapter IX. THE NEVER BIRD
+
+[Wed Oct 16 11:48:36 2024]  Chapter X. THE HAPPY HOME
+
+[Wed Oct 16 11:48:39 2024]  Chapter XI. WENDY’S STORY
+
+[Wed Oct 16 11:48:42 2024] The Project Gutenberg eBook of Peter Pan
+
+[Wed Oct 16 11:48:42 2024]  Chapter XII. THE CHILDREN ARE CARRIED OFF
+
+[Wed Oct 16 11:48:45 2024]     
+
+[Wed Oct 16 11:48:45 2024]  Chapter XIII. DO YOU BELIEVE IN FAIRIES?
+
+[Wed Oct 16 11:48:48 2024] This ebook is for the use of anyone anywhere in the United States and
+
+[Wed Oct 16 11:48:48 2024]  Chapter XIV. THE PIRATE SHIP
+
+[Wed Oct 16 11:48:51 2024] most other parts of the world at no cost and with almost no restrictions
+
+[Wed Oct 16 11:48:51 2024]  Chapter XV. “HOOK OR ME THIS TIME”
+
+[Wed Oct 16 11:48:54 2024] whatsoever. You may copy it, give it away or re-use it under the terms
+
+[Wed Oct 16 11:48:54 2024]  Chapter XVI. THE RETURN HOME
+
+[Wed Oct 16 11:48:57 2024] of the Project Gutenberg License included with this ebook or online
+
+[Wed Oct 16 11:48:57 2024]  Chapter XVII. WHEN WENDY GREW UP
+[Wed Oct 16 11:49:00 2024] at www.gutenberg.org. If you are not located in the United States,
+
+[Wed Oct 16 11:49:03 2024] you will have to check the laws of the country where you are located
+
+[Wed Oct 16 11:49:06 2024] before using this eBook.
