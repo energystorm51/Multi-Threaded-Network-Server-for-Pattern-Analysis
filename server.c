@@ -14,12 +14,40 @@
 #define MAXLINE 512       // Buffer size for incoming text lines
 #define SA struct sockaddr
 
+// Structure to hold node data
+struct Node {
+    char text[MAXLINE];
+    struct Node* next;
+    struct Node* book_next;
+    struct Node* next_frequent_search;
+    int connection_order;
+};
+
+// Structure to hold connection data
+struct Thread_Data {
+    int connfd;
+    int connection_order;
+    struct Node* book_head;
+    struct Node* book_tail;
+};
+
 // Global connection counter and mutex
 int connection_counter = 0;
 pthread_mutex_t counter_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t list_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+// Global port and pattern declaration
+char *port_str = NULL;
+char *pattern = NULL;
+
+// Global List Initialization
+struct Node* head = NULL;
+struct Node* tail = NULL;
+
+// Pattern Search List Variables
+struct Node* first_pattern_node = NULL;
+struct Node* previous_pattern_node = NULL;
 
 // Parses input arguments from the console
 int parse_arguments(int argc, char *argv[], char **port, char **pattern) {
@@ -58,34 +86,17 @@ int parse_arguments(int argc, char *argv[], char **port, char **pattern) {
 }
 
 
-// Structure to hold connection data
-struct Thread_Data {
-    int connfd;
-    int connection_order;
-    struct Node* book_head;
-    struct Node* book_tail;
-};
 
-// List Node structure Definition
-struct Node {
-    char text[MAXLINE];
-    struct Node* next;
-    struct Node* book_next;
-    int connection_order;
-};
-
-// Global List Initialization
-struct Node* head = NULL;
-struct Node* tail = NULL;
 
 // Helper functions to manage Shared List
-void update_shared_list(char buffer[], struct Thread_Data *data){
+void update_shared_list(char buffer[], struct Thread_Data *data, int pattern_found){
 
-    // Creat node for new line read
+    // Create node for new line read
     struct Node* new_read = malloc(sizeof(struct Node));
     strcpy(new_read->text, buffer);
     new_read->next = NULL;
     new_read->book_next = NULL;
+    new_read->next_frequent_search = NULL;
     new_read->connection_order = data->connection_order;
 
     // Case 1: First read - empty list, set both head and tail to the new node
@@ -123,7 +134,7 @@ void update_shared_list(char buffer[], struct Thread_Data *data){
     }
 
     // Update the book list of individual threads
-    // Similar to updating the global shared list
+    // Similar logic to updating the global shared list
     if(data->book_head == NULL){
         data->book_head = new_read;
         data->book_tail = new_read;
@@ -139,13 +150,30 @@ void update_shared_list(char buffer[], struct Thread_Data *data){
         data->book_tail = new_read;
     }
 
+    // Update the identified pattern pointer
+    if(pattern_found){
+
+        // Track the first identified node in the first pattern occurence
+        if(previous_pattern_node == NULL){
+            previous_pattern_node = new_read;
+            first_pattern_node = new_read;
+        }
+        // Update the last identified node to point to new node
+        // Set new node as the last identified node
+        else{
+            previous_pattern_node->next_frequent_search = new_read;
+            previous_pattern_node = new_read;
+        }
+    }
+
 }
 
-void print_shared_list(){
-    struct Node* curr = head;
+void print_list(struct Node* list_head){
+    struct Node* curr = list_head;
+    fprintf(stdout, "> Result for [%s]\n", pattern);
     while(curr != NULL){
         fprintf(stdout, "%s\n", curr->text);
-        curr = curr->next;
+        curr = curr->next_frequent_search;
     }
 }
 
@@ -208,15 +236,25 @@ void *read_book_lines(void *arg){
     struct Thread_Data *data = (struct Thread_Data *)arg;
     char buffer[MAXLINE];
     int bytes_received;
+    int pattern_found;
 
     printf("Handling client connection #0%d...\n", data->connection_order);
 
+    // Continuously read every incoming book line
     while(1){
         bytes_received = recv(data->connfd, buffer, MAXLINE, 0);
 
         if(bytes_received > 0){
             // Received data from client
             buffer[bytes_received] = '\0';
+
+            // Find pattern occurence in the buffer line
+            if(strstr(buffer, pattern) == NULL){
+                pattern_found = 0;
+            }
+            else{
+                pattern_found = 1;
+            }
 
             // Write line read to global logfile using mutex
             pthread_mutex_lock(&log_mutex);
@@ -225,41 +263,41 @@ void *read_book_lines(void *arg){
 
             // Add new node to the shared list
             pthread_mutex_lock(&list_mutex);
-            update_shared_list(buffer, data);
+            update_shared_list(buffer, data, pattern_found);
             pthread_mutex_unlock(&list_mutex);
         }
+
         else if(bytes_received == 0){
             // Client closed connection
             printf("Client #0%d disconnected...\n", data->connection_order);
             break;
         }
+
         else if(errno == EAGAIN || errno == EWOULDBLOCK){
             // No data available, non-blocking mode is active
             // Add a sleep to prevent busy-waiting
             usleep(1000);  // Sleep for 1 millisecond
             continue;
         }
+
         else{
             // Some other error occurred
             perror("recv error");
             break;
         }
+
     }
 
     // Cleanup and exit thread
     close(data->connfd);
     write_book(data->book_head, data->connection_order);
+    print_list(first_pattern_node);
     free(data);  // Free allocated memory for thread data
     pthread_exit(NULL);
 }
 
-
-
 // Main Program
 int main(int argc, char *argv[]) {
-
-    char *port_str = NULL;
-    char *pattern = NULL;
 
     // Function to parse socket port and string pattern arguments
     int result = parse_arguments(argc, argv, &port_str, &pattern);
