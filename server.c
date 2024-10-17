@@ -122,6 +122,8 @@ void update_shared_list(char buffer[], struct Thread_Data *data){
         tail = new_read;
     }
 
+    // Update the book list of individual threads
+    // Similar to updating the global shared list
     if(data->book_head == NULL){
         data->book_head = new_read;
         data->book_tail = new_read;
