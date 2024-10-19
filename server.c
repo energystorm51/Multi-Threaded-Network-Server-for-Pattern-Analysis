@@ -21,6 +21,7 @@ struct Node {
     struct Node* book_next;
     struct Node* next_frequent_search;
     int connection_order;
+    char book_title[MAXLINE];
 };
 
 // Structure to hold connection data
@@ -31,11 +32,20 @@ struct Thread_Data {
     struct Node* book_tail;
 };
 
+// Map to hold book data and pattern frequency
+struct Analysis_Data {
+    int frequency;
+    char book_title[MAXLINE];
+};
+
 // Global connection counter and mutex
 int connection_counter = 0;
 pthread_mutex_t counter_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t list_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t print_cond = PTHREAD_COND_INITIALIZER;
+int first_thread_printing = 0;  // Flag to indicate if a thread is currently printing
 
 // Global port and pattern declaration
 char *port_str = NULL;
@@ -86,9 +96,7 @@ int parse_arguments(int argc, char *argv[], char **port, char **pattern) {
 }
 
 
-
-
-// Helper functions to manage Shared List
+// Function to manage Shared List
 void update_shared_list(char buffer[], struct Thread_Data *data, int pattern_found){
 
     // Create node for new line read
@@ -136,16 +144,19 @@ void update_shared_list(char buffer[], struct Thread_Data *data, int pattern_fou
     // Update the book list of individual threads
     // Similar logic to updating the global shared list
     if(data->book_head == NULL){
+        strcpy(new_read->book_title, new_read->text); // copy first line of book read to the 'title'
         data->book_head = new_read;
         data->book_tail = new_read;
     }
 
     else if(data->book_head == data->book_tail){
+        strcpy(new_read->book_title, data->book_head->text); // copy line of book head to current book title
         data->book_head->book_next = new_read;
         data->book_tail = new_read;
     }
 
     else{
+        strcpy(new_read->book_title, data->book_head->text);
         data->book_tail->book_next = new_read;
         data->book_tail = new_read;
     }
@@ -296,6 +307,82 @@ void *read_book_lines(void *arg){
     pthread_exit(NULL);
 }
 
+/*
+    Analysis Thread Handling
+*/
+void *analyze_patterns(void *arg) {
+    int sleep_time = *(int*)arg;
+
+    while(1) {  // Infinite loop to keep the analysis thread running
+
+        pthread_mutex_lock(&print_mutex);  // Lock the printing mutex
+
+        // Wait if another thread is already printing
+        while (first_thread_printing) {
+            pthread_cond_wait(&print_cond, &print_mutex); 
+        }
+
+        first_thread_printing = 1; // Set the flag to indicate that this thread is now printing
+        
+        // Sleep for an interval
+        sleep(sleep_time);
+
+        pthread_mutex_lock(&list_mutex);  // Lock the shared list before accessing it
+        int occurrence_count[128] = {0};
+        char book_titles[128][MAXLINE];
+
+        struct Node* current = first_pattern_node;
+
+        // Traverse the shared list and count pattern occurrences
+        while(current != NULL){
+            occurrence_count[current->connection_order]++;  // Increment counter for this connection
+            strcpy(book_titles[current->connection_order], current->book_title); // Store book title of this connection
+            current = current->next_frequent_search; // Point to next line of matching pattern
+        }
+        pthread_mutex_unlock(&list_mutex);  // Unlock the shared list
+
+        struct Analysis_Data ordered_frequency_list[128];
+
+        // Order pattern occurrence using selection sort
+        for(int i = 1; i <= connection_counter; i++){
+
+            // Initialize position with largest frequency
+            int max_pos = i;
+
+            for(int j = 1; j <= connection_counter; j++){
+                if(occurrence_count[j] > occurrence_count[max_pos]){
+                    max_pos = j;
+                }
+            }
+
+            // Store data in descending order, i.e. largest first
+            ordered_frequency_list[i].frequency = occurrence_count[max_pos];
+            strcpy(ordered_frequency_list[i].book_title, book_titles[max_pos]);
+
+            // Reset max pos values to avoid duplicates
+            occurrence_count[max_pos] = 0;
+            strcpy(book_titles[max_pos], "");
+
+        }
+
+        // Output occurence results
+        for(int i = 1; i <= connection_counter; i++){
+            printf("{%d} --> Book: {%s}, Pattern: '{%s}', Frequency: {%d}\n", i, ordered_frequency_list[i].book_title, pattern, ordered_frequency_list[i].frequency);
+        }
+
+        // Reset the flag after printing is done
+        first_thread_printing = 0;
+
+        // Signal to other threads that printing is done
+        pthread_cond_broadcast(&print_cond);
+        pthread_mutex_unlock(&print_mutex);  // Unlock the printing mutex
+        
+    }
+
+    pthread_exit(NULL);  
+}
+
+
 // Main Program
 int main(int argc, char *argv[]) {
 
@@ -344,6 +431,21 @@ int main(int argc, char *argv[]) {
     }
 
     /*
+    * Creates multiple analysis threads
+    */
+    int thread_count = 2;
+    pthread_t analysis_tid[thread_count]; // Four threads
+    int thread_sleep[thread_count];
+
+    for(int i = 0; i < thread_count; i++){
+        thread_sleep[i] = (i+1)*2;
+        if(pthread_create(&analysis_tid[i], NULL, analyze_patterns, &thread_sleep[i]) != 0){
+            perror("Failed to create analysis thread...\n");
+            exit(1);
+        }
+    }
+
+    /*
     * Accept packets from clients in a loop
     * Creates thread for each client
     */
@@ -368,14 +470,14 @@ int main(int argc, char *argv[]) {
 
         // Increment global counter using mutex to track connection order
         pthread_mutex_lock(&counter_mutex);
-        int current_order = ++ connection_counter;
+        connection_counter++;
         pthread_mutex_unlock(&counter_mutex);
 
         // Create thread to handle client
         pthread_t tid;
         struct Thread_Data *data = malloc(sizeof(struct Thread_Data));
         data->connfd = connfd;
-        data->connection_order = current_order;
+        data->connection_order = connection_counter;
         data->book_head = NULL;
         data->book_tail = NULL;
 
